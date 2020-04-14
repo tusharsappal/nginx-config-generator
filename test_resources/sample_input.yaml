@@ -1,0 +1,35 @@
+ipfilter:
+  myfilter:
+  - 82.94.188.0/25
+  - 2001:888:2177::/48
+  allowall:
+  - 0.0.0.0/0
+  - ::/0
+
+catchall:
+  default:
+    port: 7000
+
+app:
+  acceptance:
+    catchall: default
+    fqdn:
+    - myapp-accp.mendixcloud.com
+    - accp.myapp.com
+    runtime_port: 8000
+    path_based_access_restriction:
+      /:
+        ipfilter: myfilter
+      /public:
+        ipfilter: allowall
+  production:
+    catchall: default
+    fqdn:
+    - myapp.mendixcloud.com
+    - myapp.com
+    runtime_port: 8001
+    path_based_access_restriction:
+      /:
+        ipfilter:
+      /secret:
+        ipfilter: myfilter
