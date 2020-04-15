@@ -15,6 +15,11 @@ from nginx.nginx import Conf, Upstream, Key, Server, Location
 
 
 def is_list_empty(list):
+    """
+    Checks if the list data structure passed is empty or not
+    :param list: List to be checked
+    :return: True if list is empty else False
+    """
     if not list:
         return True
     else:
@@ -28,9 +33,17 @@ class NginxConfigGenerator:
     data = None
 
     def __init__(self, data):
+        """
+        Initialize object.
+        :param data: Parsed yaml data as dict
+        """
         self.data = data
 
     def build_ip_filters(self):
+        """
+        Builds the filtered CIDR IP list to allow connections from
+        :return: None
+        """
         if is_list_empty(self.data['ipfilter']['myfilter']) is False:
             for item in self.data['ipfilter']['myfilter']:
                 self.cidr_filter_list.append(item)
@@ -40,6 +53,10 @@ class NginxConfigGenerator:
                 "Nginx configuration")
 
     def build_allow_all_ip_list(self):
+        """
+        Builds the CIDR IP List for allowing connections from universe
+        :return: None
+        """
         if is_list_empty(self.data['ipfilter']['allowall']) is False:
             for item in self.data['ipfilter']['allowall']:
                 self.cidr_allow_all_list.append(item)
@@ -49,10 +66,21 @@ class NginxConfigGenerator:
                 'the Nginx configuration ')
 
     def build_default_catch_all_map(self):
+        """
+        Builds the map for catchall configurations
+        :return: None
+        """
         self.default_catch_all_map = self.data['catchall']
 
     @staticmethod
     def build_upstream_conf(env=None, runtime_port=None, upstream_default_host=None):
+        """
+        Builds the upstream section configuration for the env passed
+        :param env: env being acceptance , prodcution etc
+        :param runtime_port: port on which the virtual host for env listens on being served by same Nginx host
+        :param upstream_default_host:
+        :return: Upstream configuration Object to be added to the overall generated Nginx Configuration
+        """
 
         logger.info('Building the upstream configuration for env: {}'.format(env))
         upstream_conf = Upstream(env,
@@ -61,16 +89,30 @@ class NginxConfigGenerator:
 
     def build_server_conf(self, is_default=False, env=None, server_name_list=[], location_config=None,
                           default_config_identifier=None, default_port=None, default_root_directory=None):
+        """
+        Builds the Nginx server section configuration for the env passed
+        :param is_default: is passed as True , will build the config for default server ( env )
+        :param env: env being acceptance , production etc
+        :param server_name_list: Virtual Server Host entry serving the traffic for the env passed
+        :param location_config: Build configuration for different path's being served by the env passed
+        :param default_config_identifier: Builds the listen construct for the default catchall runtime port
+        :param default_port: Default port value to build default server configuration, applicable only when is_default entry is set to True
+        :param default_root_directory: Default path for the default server configuration , applicable only when is_default is set to True
+        :return: Server Configuration Object to be added to overall generated Nginx Configuration.
+        """
         server_conf = Server()
 
         if is_default is False:
             logger.info("Building the server section for {}".format(env))
-            for server in server_name_list:
-                server_conf.add(
-                    Key(
-                        'server_name', server
+            if server_name_list:
+                for server in server_name_list:
+                    server_conf.add(
+                        Key(
+                            'server_name', server
+                        )
                     )
-                )
+            else:
+                logger.warning("Server Name for env {} are not set".format(env))
             server_conf.add(
                 Key('listen', '[::]:' + str(
                     self.default_catch_all_map[default_config_identifier]['port']) + 'default_server ipv6only=on'),
@@ -113,6 +155,9 @@ class NginxConfigGenerator:
 
 
 if __name__ == "__main__":
+    """
+    The Starting block for the program
+    """
 
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
