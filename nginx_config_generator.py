@@ -1,6 +1,5 @@
 # Nice to have features
-# TODO :- Add capability to load from a URI
-# TODO:- Add docopt functionality to the code , to run as CLI
+# Add capability to load input from a URI
 
 import argparse
 import logging
