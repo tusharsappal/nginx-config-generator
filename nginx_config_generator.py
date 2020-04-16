@@ -1,5 +1,6 @@
 # Nice to have features
 # Add capability to load input from a URI
+# Add markdown file describing the project features
 
 import argparse
 import logging
@@ -165,7 +166,9 @@ if __name__ == "__main__":
     """
     parser = argparse.ArgumentParser(description='Script to generate Nginx Configuration')
     parser.add_argument("--input", required=True, help="Location of the input.yaml file to process", type=str)
-    parser.add_argument("--output", required=False, help="Location where the output nginx donfig would be dumped",
+    parser.add_argument("--output", required=False,
+                        help="Location where the output nginx donfig would be dumped "
+                             "(this includes the output file name as well",
                         type=str)
 
     args = parser.parse_args()
