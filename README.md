@@ -2,10 +2,10 @@
 
 This repository hosts utiltiy to generate a valid Nginx Configuration from the specified input params
 
-###Project Description
+### Project Description
 The project aims to create a valid Nginx configuration from a generalized yaml template provided as input.
 
-####Project Structure
+#### Project Structure
 The project is divided into the following folders , files 
 
 1. `nginx` :- This folder hosts the backing library file which generates the valid Nginx Configuration .
@@ -15,7 +15,7 @@ The project is divided into the following folders , files
 5. `resources/sample_generated_nginx.conf` :- Sample Nginx configuration that would be generated for sample input.yaml file. 
 6. `nginx_config_generator.py` :- Driver script which builds configuration for Nginx.   
 
-####Usage
+#### Usage
 
 Running the script is quite easy , make sure the pre-requisite dependencies are installed ( as listed in requirements.txt)
 
@@ -42,7 +42,7 @@ optional arguments:
                    (this includes the output file name as well
 ```
 
-####Few points to note 
+#### Few points to note 
 1. --input argument is mandatory to be provided for the script to run.
 2. --output argument is optional, if not specified the generated Nginx configuration would be created under resources folder.
 3. Subsequent run of the script would over-ride the already generated Nginx configuration if the explicity default path is not provided.
