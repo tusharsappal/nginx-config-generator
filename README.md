@@ -29,7 +29,8 @@ Run the script with the following command line params
 
 For getting help on the script and params, run the driver script with `--help` argument
 
-```nginx_config_generator.py --help
+```bash
+nginx_config_generator.py --help
 
 usage: nginx_config_generator.py [-h] --input INPUT [--output OUTPUT]
 
