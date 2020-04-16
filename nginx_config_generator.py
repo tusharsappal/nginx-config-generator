@@ -2,6 +2,7 @@
 # TODO :- Add capability to load from a URI
 # TODO:- Add docopt functionality to the code , to run as CLI
 
+import argparse
 import logging
 
 import yaml
@@ -11,7 +12,7 @@ try:
 except ImportError:
     from yaml import Loader, Dumper
 
-from nginx.nginx import Conf, Upstream, Key, Server, Location
+from nginx.nginx import Conf, Upstream, Key, Server, Location, dump
 
 
 def is_list_empty(list):
@@ -119,21 +120,26 @@ class NginxConfigGenerator:
                 Key('listen',
                     '0.0.0.0:' + str(self.default_catch_all_map[default_config_identifier]['port']) + 'default_server'))
 
-            for key in location_config:
-                loc = Location(key)
-                loc.add(Key('proxy_pass', 'http://' + env)),
+            if location_config:
+                for key in location_config:
+                    loc = Location(key)
+                    loc.add(Key('proxy_pass', 'http://' + env)),
 
-                if location_config[key]['ipfilter'] == 'myfilter':
-                    for cidr in self.cidr_filter_list:
-                        loc.add(Key('allow', cidr))
-                elif location_config[key]['ipfilter'] == 'allowall':
-                    for cidr in self.cidr_allow_all_list:
-                        loc.add(Key('allow', cidr))
-                loc.add(Key('deny', 'all'))
+                    if location_config[key]['ipfilter'] == 'myfilter':
+                        for cidr in self.cidr_filter_list:
+                            loc.add(Key('allow', cidr))
+                    elif location_config[key]['ipfilter'] == 'allowall':
+                        for cidr in self.cidr_allow_all_list:
+                            loc.add(Key('allow', cidr))
+                    loc.add(Key('deny', 'all'))
 
-                server_conf.add(loc)
+                    server_conf.add(loc)
+            else:
+                logger.warning("Location is/are not specified for the env:{}".format(env))
 
         elif is_default is True:
+            if str(default_port) is None or len(str(default_port)) == 0:
+                logger.warning("Default port not set, Nginx config for default host might now work properly !!")
             server_conf.add(
                 Key('listen', '[::]:' + str(default_port) + 'default_server ipv6only=on'),
                 Key('listen', '0.0.0.0:' + str(default_port) + 'default_server'),
@@ -158,6 +164,12 @@ if __name__ == "__main__":
     """
     The Starting block for the program
     """
+    parser = argparse.ArgumentParser(description='Script to generate Nginx Configuration')
+    parser.add_argument("--input", required=True, help="Location of the input.yaml file to process", type=str)
+    parser.add_argument("--output", required=False, help="Location where the output nginx donfig would be dumped",
+                        type=str)
+
+    args = parser.parse_args()
 
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
@@ -169,8 +181,16 @@ if __name__ == "__main__":
 
     logger.addHandler(stream_handler)
 
+    logger.info("Reading Yaml file from location {}".format(args.input))
+
+    if not args.output:
+        logger.warning("Output location not specified , will be storing the generated nginx under resources folder")
+    else:
+        logger.info(
+            "Output location specified as {}, will be used to store the generate Nginx file".format(args.output))
+
     try:
-        with open(r"./resources/sample_input.yaml") as file:
+        with open(args.input, "r") as file:
             logger.info("Parsing the provided yaml configuration")
             data = yaml.load(file, Loader=yaml.FullLoader)
     except Exception as ex:
@@ -228,4 +248,16 @@ if __name__ == "__main__":
                                    location_config=path_map,
                                    default_config_identifier=catch_all_config_identifier))
 
-    logger.info(''.join(c.as_strings))
+    file_handler = None
+    output_path = None
+    if args.output:
+        output_path = args.output
+        file_handler = open(args.output, "w")
+    else:
+        output_path = "./resources/generated_nginx.conf"
+        file_handler = open(output_path, "w")
+
+    # Writing the Nginx configuration to the location specified
+    dump(c, file_handler)
+
+    logger.info('Generated Nginx Configuration is present location {}'.format(output_path))
