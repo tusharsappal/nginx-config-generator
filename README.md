@@ -13,7 +13,8 @@ The project is divided into the following folders , files
 3. `resources` :- This folder hosts a sample input yaml for the project , and this is the default directory where generated output nginx configs are stored if ouput file path is not specified.
 4. `resouces/sample_input.yaml` :-  Sample yaml input file for reference.
 5. `resources/sample_generated_nginx.conf` :- Sample Nginx configuration that would be generated for sample input.yaml file. 
-6. `nginx_config_generator.py` :- Driver script which builds configuration for Nginx.   
+6. `nginx_config_generator.py` :- Driver script which builds configuration for Nginx.
+7. `tests.py` :- Unit test file hosts tests around nginx configuration.
 
 #### Usage
 

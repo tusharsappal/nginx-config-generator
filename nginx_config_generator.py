@@ -1,8 +1,7 @@
 # Some TODO items
 # Add capability to load input from a URI
-# Add markdown file describing the project features
-# Add some unit-tests
 # Add capability to generate a new config on every run , in cases to prevent over-ride ( Can be controlled via command line flag)
+# Adding travis CI to the project
 
 
 import argparse

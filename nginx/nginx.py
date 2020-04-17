@@ -231,15 +231,6 @@ class Upstream(Container):
         self.name = 'upstream'
 
 
-class Map(Container):
-    """Container for map configuration."""
-
-    def __init__(self, value, *args):
-        """Initialize."""
-        super(Map, self).__init__(value, *args)
-        self.name = 'map'
-
-
 class Key(object):
     """Represents a simple key/value object found in an nginx config."""
 
@@ -269,6 +260,80 @@ class Key(object):
         if '"' not in self.value and (';' in self.value or '#' in self.value):
             return '{0} "{1}";\n'.format(self.name, self.value)
         return '{0} {1};\n'.format(self.name, self.value)
+
+
+def loads(data, conf=True):
+    """
+    Load an nginx configuration from a provided string.
+    :param str data: nginx configuration
+    :param bool conf: Load object(s) into a Conf object?
+    """
+    f = Conf() if conf else []
+    lopen = []
+    index = 0
+
+    while True:
+        m = re.compile(r'^\s*server\s*{', re.S).search(data[index:])
+        if m:
+            s = Server()
+            lopen.insert(0, s)
+            index += m.end()
+            continue
+
+        m = re.compile(r'^\s*location\s*([^;]*?)\s*{', re.S).search(data[index:])
+        if m:
+            l = Location(m.group(1))
+            lopen.insert(0, l)
+            index += m.end()
+            continue
+
+        m = re.compile(r'^\s*upstream\s*([^;]*?)\s*{', re.S).search(data[index:])
+        if m:
+            u = Upstream(m.group(1))
+            lopen.insert(0, u)
+            index += m.end()
+            continue
+
+        m = re.compile(r'^\s*}', re.S).search(data[index:])
+        if m:
+            if isinstance(lopen[0], Container):
+                c = lopen[0]
+                lopen.pop(0)
+                if lopen and isinstance(lopen[0], Container):
+                    lopen[0].add(c)
+                else:
+                    f.add(c) if conf else f.append(c)
+            index += m.end()
+            continue
+
+        double = r'\s*"[^"]*"'
+        single = r'\s*\'[^\']*\''
+        normal = r'\s*[^;\s]*'
+        s1 = r'{}|{}|{}'.format(double, single, normal)
+        s = r'^\s*({})\s*((?:{})+);'.format(s1, s1)
+        m = re.compile(s, re.S).search(data[index:])
+        if m:
+            k = Key(m.group(1), m.group(2))
+            if lopen and isinstance(lopen[0], (Container, Server)):
+                lopen[0].add(k)
+            else:
+                f.add(k) if conf else f.append(k)
+            index += m.end()
+            continue
+
+        m = re.compile(r'^\s*(\S+);', re.S).search(data[index:])
+        if m:
+            k = Key(m.group(1), '')
+            if lopen and isinstance(lopen[0], (Container, Server)):
+                lopen[0].add(k)
+            else:
+                f.add(k) if conf else f.append(k)
+            index += m.end()
+            continue
+
+        break
+
+    return f
 
 
 def dumps(obj):
